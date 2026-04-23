@@ -1,0 +1,16 @@
+{
+  "short_name": "동사공부방",
+  "name": "소소자매 동사공부방",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3426/3426653.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0F1115",
+  "background_color": "#0F1115"
+}

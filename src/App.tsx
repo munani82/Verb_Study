@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Compass, 
@@ -21,9 +21,11 @@ import { QuizView } from './components/QuizView';
 import { VocabularyBook } from './components/VocabularyBook';
 
 import { ProfileSelector } from './components/ProfileSelector';
-import { LogOut, RefreshCw } from 'lucide-react';
+import { LogOut, RefreshCw, Settings, UserCircle, ShieldCheck } from 'lucide-react';
+import { signInWithGoogle, logout, auth } from './lib/firebase';
+import { ParentDashboard } from './components/ParentDashboard';
 
-type View = 'dashboard' | 'words' | 'vocabulary' | 'quiz';
+type View = 'dashboard' | 'words' | 'vocabulary' | 'quiz' | 'admin';
 
 export default function App() {
   const { 
@@ -40,6 +42,11 @@ export default function App() {
   
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [activeLevel, setActiveLevel] = useState<number | null>(null);
+  const [user, setUser] = useState(auth.currentUser);
+
+  useEffect(() => {
+    return auth.onAuthStateChanged(setUser);
+  }, []);
 
   const levelVerbs = useMemo(() => {
     if (activeLevel === null) return [];
@@ -65,9 +72,43 @@ export default function App() {
     setActiveLevel(null);
   };
 
-  if (!activeProfile) {
+  const handleLogin = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      alert("로그인 중 오류가 발생했습니다.");
+    }
+  };
+
+  if (!activeProfile && currentView !== 'admin') {
     return (
-      <div className="min-h-screen bg-bg p-8">
+      <div className="min-h-screen bg-bg p-8 flex flex-col items-center">
+        <div className="w-full max-w-lg mb-8 flex justify-end">
+          {user ? (
+            <div className="flex items-center gap-3 glass p-2 px-4 rounded-full max-w-[280px] sm:max-w-none">
+              <span className="text-xs font-bold text-text-dim whitespace-nowrap overflow-hidden text-ellipsis">
+                {user.displayName} <span className="hidden sm:inline">(실시간 동기화)</span>
+              </span>
+              <button 
+                onClick={() => setCurrentView('admin')}
+                className="p-2 hover:bg-white/10 rounded-full text-secondary"
+                title="관리자 설정"
+              >
+                <ShieldCheck className="w-5 h-5" />
+              </button>
+              <button onClick={logout} className="p-2 hover:bg-white/10 rounded-full text-text-dim">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={handleLogin}
+              className="flex items-center gap-2 glass px-4 py-2 rounded-full hover:bg-white/10 transition-all text-xs font-bold"
+            >
+              <UserCircle className="w-4 h-4" /> 부모님 로그인 (클라우드 동기화)
+            </button>
+          )}
+        </div>
         <ProfileSelector profiles={profiles} onSelect={setActiveProfileId} />
       </div>
     );
@@ -106,6 +147,16 @@ export default function App() {
         </button>
 
         <div className="md:mt-auto flex md:flex-col gap-4">
+          {user && (
+            <button 
+              onClick={() => setCurrentView('admin')}
+              className={`nav-icon ${currentView === 'admin' ? 'active' : ''}`}
+              title="관리자 통계"
+            >
+              <ShieldCheck className="w-6 h-6" />
+            </button>
+          )}
+          
           <button 
             onClick={() => {
               setActiveProfileId(null);
@@ -118,18 +169,36 @@ export default function App() {
             <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
           </button>
           
-          <div className="flex flex-col items-center gap-1 group">
-            <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-xl shadow-inner hidden md:flex">
-              {activeProfile.avatar}
+          {activeProfile && (
+            <div className="flex flex-col items-center gap-1 group shrink-0">
+              <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-xl shadow-inner hidden md:flex">
+                {activeProfile.avatar}
+              </div>
+              <span className="text-[10px] font-black text-text-dim group-hover:text-white transition-colors block md:hidden lg:block whitespace-nowrap">
+                {activeProfile.name}
+              </span>
             </div>
-            <span className="text-[9px] font-black text-text-dim group-hover:text-white transition-colors block md:hidden lg:block">{activeProfile.name}</span>
-          </div>
+          )}
         </div>
       </aside>
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-5xl mx-auto px-6 py-8 md:p-12 w-full">
         <AnimatePresence mode="wait">
+          {currentView === 'admin' && (
+            <motion.div
+              key="admin"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <ParentDashboard 
+                profiles={profiles} 
+                onClose={() => setCurrentView('dashboard')} 
+              />
+            </motion.div>
+          )}
+
           {currentView === 'dashboard' && (
             <motion.div
               key="dashboard"

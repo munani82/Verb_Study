@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() { return request.auth != null; }
+    function isEmailVerified() { return request.auth.token.email_verified == true; }
+    function getUserEmail() { return request.auth.token.email; }
+    function existing() { return resource.data; }
+    function incoming() { return request.resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    // Check if the user is the owner of the profile
+    function isOwner(email) {
+      return isSignedIn() && isEmailVerified() && getUserEmail() == email;
+    }
+
+    // Validation for Profile
+    function isValidProfile(data) {
+      return data.name is string && data.name.size() <= 50
+        && data.avatar is string && data.avatar.size() <= 10
+        && data.ownerEmail is string && data.ownerEmail.size() <= 100
+        && data.progress is map
+        && data.progress.exp is number
+        && data.progress.unlockedLevels is list
+        && data.progress.completedWords is list
+        && data.progress.incorrectWords is list
+        && data.progress.badges is list;
+    }
+
+    match /profiles/{profileId} {
+      allow get: if isOwner(existing().ownerEmail);
+      allow list: if isSignedIn() && isEmailVerified() && resource.data.ownerEmail == getUserEmail();
+      
+      allow create: if isOwner(incoming().ownerEmail) 
+                   && isValidId(profileId)
+                   && isValidProfile(incoming());
+                   
+      allow update: if isOwner(existing().ownerEmail)
+                   && isOwner(incoming().ownerEmail)
+                   && isValidProfile(incoming())
+                   && incoming().ownerEmail == existing().ownerEmail; // Immutable owner
+
+      allow delete: if isOwner(existing().ownerEmail);
+    }
+  }
+}

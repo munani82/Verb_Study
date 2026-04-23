@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
 import { UserProgress, UserProfile, Rank, RANKS } from '../types';
+import { auth, db } from '../lib/firebase';
+import { 
+  collection, 
+  query, 
+  where, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 const STORAGE_KEY = 'verb_voyage_profiles';
 const ACTIVE_PROFILE_KEY = 'verb_voyage_active_id';
@@ -22,7 +34,6 @@ export const useProgress = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed: UserProfile[] = JSON.parse(saved);
-      // 구 버전 이름 감지 시 강제 업데이트 로직 추가
       return parsed.map(p => {
         if (p.id === 'child-1' && p.name === '첫째 탐험가') return { ...p, name: '루미소율', avatar: '👧' };
         if (p.id === 'child-2' && p.name === '둘째 탐험가') return { ...p, name: '조이소원', avatar: '👩‍🦰' };
@@ -36,6 +47,52 @@ export const useProgress = () => {
     return localStorage.getItem(ACTIVE_PROFILE_KEY);
   });
 
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Firebase Firestore Sync
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const q = query(collection(db, 'profiles'), where('ownerEmail', '==', currentUser.email));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fbProfiles: UserProfile[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        fbProfiles.push({
+          id: doc.id,
+          name: data.name,
+          avatar: data.avatar,
+          progress: data.progress
+        });
+      });
+
+      if (fbProfiles.length > 0) {
+        setProfiles(fbProfiles);
+      } else {
+        // Initialize Firebase with current local profiles if empty
+        profiles.forEach(async (p) => {
+          await setDoc(doc(db, 'profiles', p.id), {
+            ...p,
+            ownerEmail: currentUser.email,
+            updatedAt: serverTimestamp()
+          });
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [currentUser]);
+
+  // Local Storage Save
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
   }, [profiles]);
@@ -49,11 +106,29 @@ export const useProgress = () => {
   const activeProfile = profiles.find(p => p.id === activeProfileId) || null;
   const progress = activeProfile?.progress || initialProgress;
 
-  const updateActiveProgress = (updater: (prev: UserProgress) => UserProgress) => {
+  const updateActiveProgress = async (updater: (prev: UserProgress) => UserProgress) => {
     if (!activeProfileId) return;
+    
+    // Update local state first for immediate feedback
     setProfiles(prevProfiles => prevProfiles.map(p => 
       p.id === activeProfileId ? { ...p, progress: updater(p.progress) } : p
     ));
+
+    // Update Firebase if logged in
+    if (currentUser) {
+      const p = profiles.find(p => p.id === activeProfileId);
+      if (p) {
+        const newProgress = updater(p.progress);
+        try {
+          await updateDoc(doc(db, 'profiles', activeProfileId), {
+            progress: newProgress,
+            updatedAt: serverTimestamp()
+          });
+        } catch (error) {
+          console.error("Firestore update failed:", error);
+        }
+      }
+    }
   };
 
   const markWordCompleted = (id: string) => {

@@ -1,0 +1,32 @@
+{
+  "entities": {
+    "profile": {
+      "title": "Child Profile",
+      "description": "Learning progress and configuration for a child.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "progress": {
+          "type": "object",
+          "properties": {
+            "unlockedLevels": { "type": "array", "items": { "type": "number" } },
+            "completedWords": { "type": "array", "items": { "type": "string" } },
+            "incorrectWords": { "type": "array", "items": { "type": "string" } },
+            "exp": { "type": "number" },
+            "badges": { "type": "array", "items": { "type": "string" } },
+            "lastUpdated": { "type": "string", "format": "date-time" }
+          }
+        },
+        "ownerEmail": { "type": "string" }
+      },
+      "required": ["name", "progress", "ownerEmail"]
+    }
+  },
+  "firestore": {
+    "/profiles/{profileId}": {
+      "schema": "profile",
+      "description": "Individual learning profiles for the children."
+    }
+  }
+}
