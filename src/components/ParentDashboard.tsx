@@ -1,14 +1,20 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { UserProfile, RANKS } from '../types';
-import { Trophy, BookOpen, AlertCircle, Award, ArrowLeft, TrendingUp } from 'lucide-react';
+import { Trophy, BookOpen, AlertCircle, Award, ArrowLeft, TrendingUp, RotateCcw } from 'lucide-react';
 
 interface ParentDashboardProps {
   profiles: UserProfile[];
   onClose: () => void;
+  onReset: (id: string) => void;
 }
 
-export const ParentDashboard: React.FC<ParentDashboardProps> = ({ profiles, onClose }) => {
+export const ParentDashboard: React.FC<ParentDashboardProps> = ({ profiles, onClose, onReset }) => {
+  const handleReset = (id: string, name: string) => {
+    if (confirm(`${name} 아이의 모든 학습 기록을 초기화할까요? 이 작업은 되돌릴 수 없습니다.`)) {
+      onReset(id);
+    }
+  };
   return (
     <div className="space-y-10">
       <header className="flex items-center justify-between">
@@ -100,6 +106,13 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ profiles, onCl
                     <span className="text-[11px] font-bold">오답 노트에 {progress.incorrectWords.length}개의 단어가 대기 중입니다.</span>
                   </div>
                 )}
+                
+                <button
+                  onClick={() => handleReset(profile.id, name)}
+                  className="w-full py-3 border border-white/5 bg-white/3 hover:bg-red-500/10 hover:border-red-500/20 text-text-dim hover:text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 mt-4"
+                >
+                  <RotateCcw className="w-3 h-3" /> 진도 초기화
+                </button>
               </div>
             </motion.div>
           );

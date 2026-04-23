@@ -169,6 +169,27 @@ export const useProgress = () => {
     return RANKS[3];
   };
 
+  const resetProgress = async (profileId: string) => {
+    const freshProgress: UserProgress = { ...initialProgress };
+    
+    // Update local state
+    setProfiles(prev => prev.map(p => 
+      p.id === profileId ? { ...p, progress: freshProgress } : p
+    ));
+
+    // Update Firebase
+    if (currentUser) {
+      try {
+        await updateDoc(doc(db, 'profiles', profileId), {
+          progress: freshProgress,
+          updatedAt: serverTimestamp()
+        });
+      } catch (error) {
+        console.error("Reset failed:", error);
+      }
+    }
+  };
+
   return { 
     progress, 
     activeProfile, 
@@ -178,6 +199,7 @@ export const useProgress = () => {
     addBadge, 
     addIncorrectWord, 
     removeIncorrectWord, 
-    getRank 
+    getRank,
+    resetProgress
   };
 };

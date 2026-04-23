@@ -24,6 +24,7 @@ import { ProfileSelector } from './components/ProfileSelector';
 import { LogOut, RefreshCw, Settings, UserCircle, ShieldCheck } from 'lucide-react';
 import { signInWithGoogle, logout, auth } from './lib/firebase';
 import { ParentDashboard } from './components/ParentDashboard';
+import { AdminAuth } from './components/AdminAuth';
 
 type View = 'dashboard' | 'words' | 'vocabulary' | 'quiz' | 'admin';
 
@@ -37,16 +38,27 @@ export default function App() {
     addBadge, 
     addIncorrectWord, 
     removeIncorrectWord, 
-    getRank 
+    getRank,
+    resetProgress
   } = useProgress();
   
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [activeLevel, setActiveLevel] = useState<number | null>(null);
   const [user, setUser] = useState(auth.currentUser);
+  const [showAdminAuth, setShowAdminAuth] = useState(false);
 
   useEffect(() => {
     return auth.onAuthStateChanged(setUser);
   }, []);
+
+  const handleAdminRequest = () => {
+    setShowAdminAuth(true);
+  };
+
+  const handleAdminAuthSuccess = () => {
+    setShowAdminAuth(false);
+    setCurrentView('admin');
+  };
 
   const levelVerbs = useMemo(() => {
     if (activeLevel === null) return [];
@@ -99,7 +111,7 @@ export default function App() {
                 {user.displayName} <span className="hidden sm:inline">(실시간 동기화)</span>
               </span>
               <button 
-                onClick={() => setCurrentView('admin')}
+                onClick={handleAdminRequest}
                 className="p-2 hover:bg-white/10 rounded-full text-secondary"
                 title="관리자 설정"
               >
@@ -125,6 +137,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg flex flex-col md:flex-row">
+      <AnimatePresence>
+        {showAdminAuth && (
+          <AdminAuth 
+            onSuccess={handleAdminAuthSuccess} 
+            onCancel={() => setShowAdminAuth(false)} 
+          />
+        )}
+      </AnimatePresence>
+      
       {/* Sidebar Navigation */}
       <aside className="w-full md:w-20 md:h-screen sticky top-0 bg-surface border-b md:border-b-0 md:border-r border-white/5 flex md:flex-col items-center py-4 md:py-8 px-4 gap-6 md:gap-10 z-50">
         <button 
@@ -158,7 +179,7 @@ export default function App() {
         <div className="md:mt-auto flex md:flex-col gap-4">
           {user && (
             <button 
-              onClick={() => setCurrentView('admin')}
+              onClick={handleAdminRequest}
               className={`nav-icon ${currentView === 'admin' ? 'active' : ''}`}
               title="관리자 통계"
             >
@@ -204,6 +225,7 @@ export default function App() {
               <ParentDashboard 
                 profiles={profiles} 
                 onClose={() => setCurrentView('dashboard')} 
+                onReset={resetProgress}
               />
             </motion.div>
           )}
