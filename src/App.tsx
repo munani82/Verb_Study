@@ -75,8 +75,16 @@ export default function App() {
   const handleLogin = async () => {
     try {
       await signInWithGoogle();
-    } catch (error) {
-      alert("로그인 중 오류가 발생했습니다.");
+    } catch (error: any) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        // User closed the popup, omit alert for better UX
+        console.log("로그인 팝업이 닫혔습니다.");
+      } else if (error.code === 'auth/cancelled-by-user') {
+        console.log("로그인이 취소되었습니다.");
+      } else {
+        alert("로그인 중 오류가 발생했습니다. 다시 시도해 주세요.");
+        console.error("Login error:", error);
+      }
     }
   };
 

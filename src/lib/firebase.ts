@@ -25,7 +25,6 @@ export const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
-    console.error("Login failed:", error);
     throw error;
   }
 };
