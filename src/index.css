@@ -38,7 +38,9 @@ body {
 }
 
 .glass {
-  @apply bg-surface/80 backdrop-blur-md border border-white/5 shadow-2xl;
+  @apply bg-surface border border-white/5 shadow-2xl;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .rank-tag {
@@ -74,6 +76,8 @@ body {
 .card-flip-front, .card-flip-back {
   backface-visibility: hidden;
   border-radius: 2rem;
+  /* Force hardware acceleration and clear scaling */
+  transform: translateZ(0); 
 }
 
 .card-flip-back {
