@@ -80,7 +80,8 @@ export const WordCard: React.FC<WordCardProps> = ({ verb, isCompleted, onComplet
               
               <div className="bg-white/3 p-3 rounded-xl">
                 <p className="text-[9px] uppercase tracking-widest text-text-dim font-black mb-1">예문 (Example)</p>
-                <p className="text-sm italic text-text leading-tight tracking-tight">"{verb.example}"</p>
+                <p className="text-sm italic text-text leading-tight tracking-tight mb-2">"{verb.example}"</p>
+                <p className="text-xs text-secondary font-medium leading-tight">뜻: {verb.exampleMeaning}</p>
               </div>
 
               {!isCompleted && isFlipped && (

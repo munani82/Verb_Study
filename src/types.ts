@@ -4,6 +4,7 @@ export interface Verb {
   word: string;
   meaning: string;
   example: string;
+  exampleMeaning: string;
   level: 1 | 2 | 3 | 4;
 }
 
