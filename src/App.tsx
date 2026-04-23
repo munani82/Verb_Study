@@ -77,13 +77,14 @@ export default function App() {
       await signInWithGoogle();
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
-        // User closed the popup, omit alert for better UX
         console.log("로그인 팝업이 닫혔습니다.");
       } else if (error.code === 'auth/cancelled-by-user') {
         console.log("로그인이 취소되었습니다.");
+      } else if (error.code === 'auth/unauthorized-domain') {
+        alert("이 도메인은 Firebase에 등록되지 않았습니다. Firebase 콘솔에서 현재 주소를 '승인된 도메인'에 추가해 주세요.");
       } else {
-        alert("로그인 중 오류가 발생했습니다. 다시 시도해 주세요.");
-        console.error("Login error:", error);
+        alert(`로그인 오류 (${error.code}): ${error.message}\nFirebase 콘솔의 '승인된 도메인' 설정을 확인해 보세요.`);
+        console.error("Detailed Login Error:", error);
       }
     }
   };
