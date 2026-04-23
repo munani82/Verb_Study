@@ -71,10 +71,6 @@ body {
   transform: rotateY(180deg);
 }
 
-.word-display {
-  @apply text-6xl md:text-7xl font-black text-secondary tracking-tighter;
-}
-
 .nav-icon {
   @apply w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 text-text-dim transition-all duration-300 hover:bg-white/10;
 }

@@ -26,6 +26,19 @@ export const WordCard: React.FC<WordCardProps> = ({ verb, isCompleted, onComplet
     window.speechSynthesis.speak(utterance);
   };
 
+  const getFontSize = (word: string, isFront: boolean) => {
+    const len = word.length;
+    if (isFront) {
+      if (len <= 6) return 'text-6xl md:text-7xl';
+      if (len <= 10) return 'text-4xl md:text-5xl';
+      return 'text-2xl md:text-3xl';
+    } else {
+      if (len <= 8) return 'text-3xl';
+      if (len <= 12) return 'text-xl';
+      return 'text-lg';
+    }
+  };
+
   return (
     <div 
       className="card-flip-container h-96 w-full cursor-pointer"
@@ -39,7 +52,7 @@ export const WordCard: React.FC<WordCardProps> = ({ verb, isCompleted, onComplet
           <div className="absolute top-4 right-4 animate-pulse">
             {isCompleted && <CheckCircle2 className="text-secondary w-6 h-6" />}
           </div>
-          <h3 className="word-display mb-4">
+          <h3 className={`font-black text-secondary tracking-tighter mb-4 ${getFontSize(verb.word, true)}`}>
             {verb.word}
           </h3>
           <p className="text-text-dim text-xs font-bold uppercase tracking-widest opacity-50">카드를 눌러 뜻과 예문을 확인하세요</p>
@@ -49,7 +62,7 @@ export const WordCard: React.FC<WordCardProps> = ({ verb, isCompleted, onComplet
         <div className="card-flip-back glass absolute inset-0 flex flex-col items-center p-6 text-center bg-surface overflow-hidden">
           <div className="mt-2 flex flex-col items-center gap-4 w-full">
             <div className="flex items-center gap-4">
-              <h3 className="text-3xl font-black text-primary tracking-tight">{verb.word}</h3>
+              <h3 className={`font-black text-primary tracking-tight ${getFontSize(verb.word, false)}`}>{verb.word}</h3>
               <button 
                 onClick={speak}
                 className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all active:scale-90"
