@@ -26,7 +26,7 @@ const initialProgress: UserProgress = {
 
 const defaultProfiles: UserProfile[] = [
   { id: 'child-1', name: '루미소율', avatar: '👧', progress: { ...initialProgress } },
-  { id: 'child-2', name: '조이소원', avatar: '👩‍🦰', progress: { ...initialProgress } }
+  { id: 'child-2', name: '조이소원', avatar: '👧', progress: { ...initialProgress } }
 ];
 
 export const useProgress = () => {
@@ -36,7 +36,9 @@ export const useProgress = () => {
       const parsed: UserProfile[] = JSON.parse(saved);
       return parsed.map(p => {
         if (p.id === 'child-1' && p.name === '첫째 탐험가') return { ...p, name: '루미소율', avatar: '👧' };
-        if (p.id === 'child-2' && p.name === '둘째 탐험가') return { ...p, name: '조이소원', avatar: '👩‍🦰' };
+        if (p.id === 'child-2' && p.name === '둘째 탐험가') return { ...p, name: '조이소원', avatar: '👧' };
+        // Force update to matches requested avatar for 조이소원
+        if (p.name === '조이소원') return { ...p, avatar: '👧' };
         return p;
       });
     }
@@ -77,6 +79,15 @@ export const useProgress = () => {
 
       if (fbProfiles.length > 0) {
         setProfiles(fbProfiles);
+        // Check if any profile in Firebase needs an avatar update (sync from code)
+        fbProfiles.forEach(async (p) => {
+          if (p.name === '조이소원' && p.avatar !== '👧') {
+            await updateDoc(doc(db, 'profiles', p.id), {
+              avatar: '👧',
+              updatedAt: serverTimestamp()
+            });
+          }
+        });
       } else {
         // Initialize Firebase with current local profiles if empty
         profiles.forEach(async (p) => {
